@@ -49,8 +49,7 @@ async function main() {
 		}
 	});
 
-	console.log({ Ricky, Joan, 
-		Nicolas, Romain });
+	console.log({ Ricky, Joan, Nicolas, Romain });
 }
 
 main()
