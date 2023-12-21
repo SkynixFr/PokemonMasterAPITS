@@ -9,3 +9,20 @@ export const getUsers = async () => {
 export const getUser = async (data: string) => {
 	return await repository.getUser(data);
 };
+
+//  Création d'un utilisateur
+export const createUser = async (
+	username: string,
+	email: string,
+	password: string
+) => {
+	return await repository.createUser(username, email, password);
+};
+//  Recherche d'un utilisateur par son pseudo ou email
+export const checkIfUserExistByUsernameOrEmail = async (
+	username: string,
+	email: string
+) => {
+	const user = await repository.findUserByUsernameOrEmail(username, email);
+	return user !== null;
+};

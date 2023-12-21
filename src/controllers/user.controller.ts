@@ -47,9 +47,9 @@ export const login = async (req: Request, res: Response) => {
 		//  Vérification du mot de passe
 		const isPasswordValid = await bcrypt.compare(password, user.password);
 
-		// if (!isPasswordValid) {
-		// 	return res.status(401).send('Invalid password');
-		// }
+		if (!isPasswordValid) {
+			return res.status(401).send('Invalid password');
+		}
 
 		if (!process.env.ACCESS_TOKEN || !process.env.REFRESH_TOKEN) {
 			return res
@@ -72,5 +72,38 @@ export const login = async (req: Request, res: Response) => {
 	} catch (error) {
 		console.error(error);
 		return res.status(500).send('Error while login the user');
+	}
+};
+
+//  Création d'un utilisateur
+export const register = async (req: Request, res: Response) => {
+	const { email, username, password } = req.body;
+	console.log(req.body);
+	console.log(email, username, password);
+
+	if (!email || !username || !password) {
+		return res
+			.status(400)
+			.send(
+				'Missing required data. Please provide email, username, and password.'
+			);
+	}
+
+	const userPassword = await bcrypt.hash(password, 10);
+
+	const userExist = await service.checkIfUserExistByUsernameOrEmail(
+		username,
+		email
+	);
+
+	if (userExist) {
+		return res.status(400).send('User already exist');
+	}
+
+	try {
+		const newUser = await service.createUser(username, email, userPassword);
+		return res.status(201).send(newUser);
+	} catch (error) {
+		return res.status(500).send('Error while creating the user');
 	}
 };
