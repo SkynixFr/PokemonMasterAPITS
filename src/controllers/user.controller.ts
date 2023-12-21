@@ -78,9 +78,6 @@ export const login = async (req: Request, res: Response) => {
 //  Création d'un utilisateur
 export const register = async (req: Request, res: Response) => {
 	const { email, username, password } = req.body;
-	console.log(req.body);
-	console.log(email, username, password);
-
 	if (!email || !username || !password) {
 		return res
 			.status(400)
