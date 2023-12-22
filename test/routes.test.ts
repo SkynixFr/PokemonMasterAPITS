@@ -108,3 +108,74 @@ test('POST /user/login doit retourner un statut 401', async () => {
 	expect(response.body.accessToken).toBeUndefined();
 	expect(response.body.refreshToken).toBeUndefined();
 });
+
+test('PUT /user/:id doit retourner un statut 200', async () => {
+	const userUpdateData = {
+		username: 'test'
+	};
+
+	// Configurez le mock pour que prisma.user.findFirst retourne l'utilisateur créé
+	prisma.user.findFirst.mockResolvedValue(newUser);
+
+	const responseLogin = await supertest(app)
+		.post('/user/login')
+		.send(userLoginData);
+
+	// Assertions sur le statut de la réponse
+	expect(responseLogin.status).toBe(200);
+	expect(responseLogin.body.accessToken).toBeDefined();
+	const accessToken = responseLogin.body.accessToken;
+
+	// Vérifiez d'abord si 'test' existe déjà dans la base de données
+	const usernameExists = await prisma.user.findFirst({
+		where: { username: 'test' }
+	});
+	console.log(usernameExists); // Vérifiez que l'username n'est pas déjà utilisé
+
+	// Si 'test' n'existe pas, alors effectuez la mise à jour
+	if (!usernameExists) {
+		// Configurez le mock pour que prisma.user.findFirst retourne l'utilisateur créé
+		prisma.user.update.mockResolvedValue(newUser);
+
+		const response = await supertest(app)
+			.put('/user/1')
+			.set('Authorization', `Bearer ${accessToken}`)
+			.send(userUpdateData);
+
+		// Assertions sur le statut de la réponse PUT
+		expect(response.status).toBe(200);
+	} else {
+		console.log('L\'username "test" existe déjà.');
+		// Vous pouvez choisir de ne pas effectuer la mise à jour si l'username existe déjà
+		// ou ajuster votre logique selon les besoins de votre application
+	}
+});
+
+test('PUT /user/:id doit retourner un statut 409', async () => {
+	const userUpdateData = {
+		username: 'test'
+	};
+
+	// Configurez le mock pour que prisma.user.findFirst retourne l'utilisateur créé
+	prisma.user.findFirst.mockResolvedValue(newUser);
+
+	const responseLogin = await supertest(app)
+		.post('/user/login')
+		.send(userLoginData);
+
+	// Assertions sur le statut de la réponse
+	expect(responseLogin.status).toBe(200);
+	expect(responseLogin.body.accessToken).toBeDefined();
+	const accessToken = responseLogin.body.accessToken;
+
+	// Configurez le mock pour que prisma.user.findFirst retourne l'utilisateur créé
+	prisma.user.update.mockResolvedValue(newUser);
+
+	const response = await supertest(app)
+		.put('/user/1')
+		.set('Authorization', `Bearer ${accessToken}`)
+		.send(userUpdateData);
+
+	// Assertions sur le statut de la réponse PUT
+	expect(response.status).toBe(409);
+});

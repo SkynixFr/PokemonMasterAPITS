@@ -26,3 +26,14 @@ export const checkIfUserExistByUsernameOrEmail = async (
 	const user = await repository.findUserByUsernameOrEmail(username, email);
 	return user !== null;
 };
+
+//  Recherche d'un utilisateur par son id
+export const checkIfUserExistById = async (id: string) => {
+	const user = await repository.findUserById(id);
+	return user !== null;
+};
+
+//  Modification d'un utilisateur
+export const updateUser = async (id: string, data: string) => {
+	return await repository.updateUser(id, data);
+};

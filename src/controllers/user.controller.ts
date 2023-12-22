@@ -104,3 +104,42 @@ export const register = async (req: Request, res: Response) => {
 		return res.status(500).send('Error while creating the user');
 	}
 };
+
+//  Modification d'un utilisateur
+export const updateUser = async (req: Request, res: Response) => {
+	const userId = req.params.id;
+	const { user, ...data } = req.body;
+
+	//  Vérification des données en entrée
+	if (JSON.stringify(data) === '{}') {
+		return res
+			.status(400)
+			.send(
+				'Missing required data. Please provide email, username, or password.'
+			);
+	}
+	//  Vérification de l'existence de l'utilisateur
+	const userExist = await service.checkIfUserExistById(userId);
+
+	if (!userExist) {
+		return res.status(404).send('User not found');
+	}
+
+	if (data.email || data.username) {
+		const userBddExist = await service.checkIfUserExistByUsernameOrEmail(
+			data.username,
+			data.email
+		);
+
+		if (userBddExist) {
+			return res.status(409).send('User already exist');
+		}
+	}
+
+	try {
+		const updatedUser = await service.updateUser(userId, data);
+		return res.status(200).send(updatedUser);
+	} catch (error) {
+		return res.status(500).send('Error while updating the user');
+	}
+};
