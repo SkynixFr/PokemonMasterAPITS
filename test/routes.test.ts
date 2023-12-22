@@ -6,7 +6,6 @@ import clientsRouter from '../src/routes/clients.routes'; // Assurez-vous que le
 import prisma from '../libs/__mocks__/prisma';
 import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
-import { get } from 'http';
 vi.mock('../libs/prisma');
 
 dotenv.config({ path: '.env.test' });
@@ -81,7 +80,7 @@ test('POST /user/register doit créer un utilisateur et retourner un statut 400'
 	prisma.user.delete.mockResolvedValue(newUser);
 });
 
-test('POST /user/login doit retourner un statut 200', async () => {
+test('POST /user/login doit retourner un statut 200 et login', async () => {
 	// Configurez le mock pour que prisma.user.findFirst retourne l'utilisateur créé
 	prisma.user.findFirst.mockResolvedValue(newUser);
 	const response = await supertest(app)
@@ -94,7 +93,7 @@ test('POST /user/login doit retourner un statut 200', async () => {
 	expect(response.body.refreshToken).toBeDefined();
 });
 
-test('POST /user/login doit retourner un statut 401', async () => {
+test('POST /user/login doit retourner un statut 401 car mauvais password', async () => {
 	// Configurez le mock pour que prisma.user.findFirst retourne l'utilisateur créé
 	prisma.user.findFirst.mockResolvedValue(newUser);
 	const userLoginData = {
@@ -112,7 +111,7 @@ test('POST /user/login doit retourner un statut 401', async () => {
 	prisma.user.delete.mockResolvedValue(newUser);
 });
 
-test('PUT /user/:id doit retourner un statut 200', async () => {
+test('PUT /user/:id doit retourner un statut 200 et mettre à jour données', async () => {
 	const userUpdateData = {
 		username: 'test'
 	};
@@ -153,7 +152,7 @@ test('PUT /user/:id doit retourner un statut 200', async () => {
 	prisma.user.delete.mockResolvedValue(newUser);
 });
 
-test('PUT /user/:id doit retourner un statut 409', async () => {
+test('PUT /user/:id doit retourner un statut 409 car déjà présent', async () => {
 	const userUpdateData = {
 		username: 'test'
 	};
@@ -183,7 +182,7 @@ test('PUT /user/:id doit retourner un statut 409', async () => {
 	prisma.user.delete.mockResolvedValue(newUser);
 });
 
-test('DELETE /user/:id doit retourner un statut 200', async () => {
+test('DELETE /user/:id doit retourner un statut 200 et delete le compte', async () => {
 	// Configurez le mock pour que prisma.user.findFirst retourne l'utilisateur créé
 	prisma.user.findFirst.mockResolvedValue(newUser);
 
@@ -204,7 +203,7 @@ test('DELETE /user/:id doit retourner un statut 200', async () => {
 	prisma.user.delete.mockResolvedValue(newUser);
 });
 
-test('DELETE /user/:id doit retourner un statut 401', async () => {
+test('DELETE /user/:id doit retourner un statut 401 et ne rien faire', async () => {
 	// Configurez le mock pour que prisma.user.findFirst retourne l'utilisateur créé
 	prisma.user.findFirst.mockResolvedValue(newUser);
 
@@ -216,4 +215,42 @@ test('DELETE /user/:id doit retourner un statut 401', async () => {
 
 	expect(response.status).toBe(401);
 	prisma.user.delete.mockResolvedValue(newUser);
+});
+
+test('GET /user/me doit retourner un statut 200 et renvoyer les données utilisateur', async () => {
+	// Configurez le mock pour que prisma.user.findFirst retourne l'utilisateur créé
+	prisma.user.findFirst.mockResolvedValue(newUser);
+
+	const responseLogin = await supertest(app)
+		.post('/user/login')
+		.send(userLoginData);
+
+	// Assertions sur le statut de la réponse
+	expect(responseLogin.status).toBe(200);
+	expect(responseLogin.body.accessToken).toBeDefined();
+	const accessToken = responseLogin.body.accessToken;
+
+	const response = await supertest(app)
+		.get('/user/me')
+		.set('Authorization', `Bearer ${accessToken}`);
+
+	expect(response.status).toBe(200);
+	expect(response.body).toBeDefined();
+	expect(response.body.username).toBe(newUser.username);
+	expect(response.body.email).toBe(newUser.email);
+	prisma.user.delete.mockResolvedValue(newUser);
+});
+
+test('GET /user/me doit retourner un statut 401 et ne rien afficher', async () => {
+	const accessToken = 'responseLogin.body.accessToken';
+
+	const response = await supertest(app)
+		.get('/user/me')
+		.set('Authorization', `Bearer ${accessToken}`);
+
+	expect(response.status).toBe(401);
+	prisma.user.delete.mockResolvedValue(newUser);
+	expect(response.body).toBeDefined();
+	expect(response.body.username).toBe(undefined);
+	expect(response.body.email).toBe(undefined);
 });

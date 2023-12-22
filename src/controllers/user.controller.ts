@@ -162,3 +162,12 @@ export const deleteUser = async (req: Request, res: Response) => {
 		return res.status(500).send('Error while deleting the user');
 	}
 };
+//	Récupération des données de l'utilisateur connecté
+export const getUserConnected = async (req: Request, res: Response) => {
+	const user = await service.getUser(req.body.user.username);
+
+	if (!user) {
+		return res.status(404).send('User not found');
+	}
+	return res.status(200).send(user);
+};

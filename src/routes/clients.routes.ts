@@ -16,4 +16,7 @@ clientsRouter.put('/:id', authToken, clientController.updateUser);
 
 //Suppression d'un utilisateur
 clientsRouter.delete('/:id', authToken, clientController.deleteUser);
+
+//Récupération des informations de l'utilisateur connecté
+clientsRouter.get('/me', authToken, clientController.getUserConnected);
 export default clientsRouter;
