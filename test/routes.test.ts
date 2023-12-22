@@ -82,8 +82,6 @@ test('POST /user/register doit créer un utilisateur et retourner un statut 400'
 test('POST /user/login doit retourner un statut 200', async () => {
 	// Configurez le mock pour que prisma.user.findFirst retourne l'utilisateur créé
 	prisma.user.findFirst.mockResolvedValue(newUser);
-	console.log(await bcrypt.compare('password', newUser.password));
-
 	const response = await supertest(app)
 		.post('/user/login')
 		.send(userLoginData);
@@ -92,4 +90,21 @@ test('POST /user/login doit retourner un statut 200', async () => {
 	expect(response.status).toBe(200);
 	expect(response.body.accessToken).toBeDefined();
 	expect(response.body.refreshToken).toBeDefined();
+});
+
+test('POST /user/login doit retourner un statut 401', async () => {
+	// Configurez le mock pour que prisma.user.findFirst retourne l'utilisateur créé
+	prisma.user.findFirst.mockResolvedValue(newUser);
+	const userLoginData = {
+		email: 'user@prisma.io',
+		password: 'password2'
+	};
+	const response = await supertest(app)
+		.post('/user/login')
+		.send(userLoginData);
+
+	// Assertions sur le statut de la réponse
+	expect(response.status).toBe(401);
+	expect(response.body.accessToken).toBeUndefined();
+	expect(response.body.refreshToken).toBeUndefined();
 });
