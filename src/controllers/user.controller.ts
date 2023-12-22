@@ -171,3 +171,59 @@ export const getUserConnected = async (req: Request, res: Response) => {
 	}
 	return res.status(200).send(user);
 };
+
+//	Refresh token
+export const refreshToken = async (req: Request, res: Response) => {
+	const authHeader = req.headers['authorization'];
+	const token = authHeader && authHeader.split(' ')[1];
+
+	if (!token) {
+		return res.status(401).send('No token provide');
+	}
+
+	if (!process.env.REFRESH_TOKEN) {
+		return res
+			.status(401)
+			.send(
+				'Missing refresh token. Please check your environment variables'
+			);
+	}
+
+	jwt.verify(token, process.env.REFRESH_TOKEN, async (error, user) => {
+		if (error) {
+			return res.status(401).send('Unauthorized ');
+		}
+
+		if (!user) {
+			return res.status(404).send('User not found');
+		}
+
+		if (typeof user === 'string') {
+			return res.status(401).send('Unauthorized');
+		}
+
+		const { iat, exp, ...data } = user;
+
+		const userBdd = await service.checkIfUserExistById(data.id);
+
+		if (!userBdd) {
+			return res.status(404).send('User not found');
+		}
+
+		if (!process.env.ACCESS_TOKEN) {
+			return res
+				.status(401)
+				.send(
+					'Missing refresh token. Please check your environment variables'
+				);
+		}
+
+		const refreshToken = jwt.sign(data, process.env.ACCESS_TOKEN, {
+			expiresIn: '600s'
+		});
+
+		return res.status(200).send({
+			accessToken: refreshToken
+		});
+	});
+};

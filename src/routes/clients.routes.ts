@@ -19,4 +19,7 @@ clientsRouter.delete('/:id', authToken, clientController.deleteUser);
 
 //Récupération des informations de l'utilisateur connecté
 clientsRouter.get('/me', authToken, clientController.getUserConnected);
+
+//  Refresh token
+clientsRouter.post('/refreshToken', clientController.refreshToken);
 export default clientsRouter;
