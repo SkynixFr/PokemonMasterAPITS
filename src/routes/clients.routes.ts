@@ -15,4 +15,5 @@ clientsRouter.post('/register', clientController.register);
 clientsRouter.put('/:id', authToken, clientController.updateUser);
 
 //Suppression d'un utilisateur
+clientsRouter.delete('/:id', authToken, clientController.deleteUser);
 export default clientsRouter;

@@ -143,3 +143,22 @@ export const updateUser = async (req: Request, res: Response) => {
 		return res.status(500).send('Error while updating the user');
 	}
 };
+
+//	Suppression d'un utilisateur
+export const deleteUser = async (req: Request, res: Response) => {
+	const userId = req.params.id;
+
+	const userExist = await service.checkIfUserExistById(userId);
+
+	if (!userExist) {
+		return res.status(404).send('User not found');
+	}
+
+	try {
+		await service.deleteUser(userId);
+		return res.status(200).send('User deleted');
+	} catch (error) {
+		console.error(error);
+		return res.status(500).send('Error while deleting the user');
+	}
+};

@@ -37,3 +37,8 @@ export const checkIfUserExistById = async (id: string) => {
 export const updateUser = async (id: string, data: string) => {
 	return await repository.updateUser(id, data);
 };
+
+//  Suppression d'un utilisateur
+export const deleteUser = async (id: string) => {
+	return await repository.deleteUser(id);
+};

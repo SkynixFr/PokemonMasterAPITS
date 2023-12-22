@@ -6,6 +6,7 @@ import clientsRouter from '../src/routes/clients.routes'; // Assurez-vous que le
 import prisma from '../libs/__mocks__/prisma';
 import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
+import { get } from 'http';
 vi.mock('../libs/prisma');
 
 dotenv.config({ path: '.env.test' });
@@ -77,6 +78,7 @@ test('POST /user/register doit créer un utilisateur et retourner un statut 400'
 	// Récupérer l'utilisateur à partir du service
 	const createdUser = await getUser(newUser.username);
 	expect(createdUser).toBeNull();
+	prisma.user.delete.mockResolvedValue(newUser);
 });
 
 test('POST /user/login doit retourner un statut 200', async () => {
@@ -107,6 +109,7 @@ test('POST /user/login doit retourner un statut 401', async () => {
 	expect(response.status).toBe(401);
 	expect(response.body.accessToken).toBeUndefined();
 	expect(response.body.refreshToken).toBeUndefined();
+	prisma.user.delete.mockResolvedValue(newUser);
 });
 
 test('PUT /user/:id doit retourner un statut 200', async () => {
@@ -130,7 +133,6 @@ test('PUT /user/:id doit retourner un statut 200', async () => {
 	const usernameExists = await prisma.user.findFirst({
 		where: { username: 'test' }
 	});
-	console.log(usernameExists); // Vérifiez que l'username n'est pas déjà utilisé
 
 	// Si 'test' n'existe pas, alors effectuez la mise à jour
 	if (!usernameExists) {
@@ -145,10 +147,10 @@ test('PUT /user/:id doit retourner un statut 200', async () => {
 		// Assertions sur le statut de la réponse PUT
 		expect(response.status).toBe(200);
 	} else {
-		console.log('L\'username "test" existe déjà.');
 		// Vous pouvez choisir de ne pas effectuer la mise à jour si l'username existe déjà
 		// ou ajuster votre logique selon les besoins de votre application
 	}
+	prisma.user.delete.mockResolvedValue(newUser);
 });
 
 test('PUT /user/:id doit retourner un statut 409', async () => {
@@ -178,4 +180,40 @@ test('PUT /user/:id doit retourner un statut 409', async () => {
 
 	// Assertions sur le statut de la réponse PUT
 	expect(response.status).toBe(409);
+	prisma.user.delete.mockResolvedValue(newUser);
+});
+
+test('DELETE /user/:id doit retourner un statut 200', async () => {
+	// Configurez le mock pour que prisma.user.findFirst retourne l'utilisateur créé
+	prisma.user.findFirst.mockResolvedValue(newUser);
+
+	const responseLogin = await supertest(app)
+		.post('/user/login')
+		.send(userLoginData);
+
+	// Assertions sur le statut de la réponse
+	expect(responseLogin.status).toBe(200);
+	expect(responseLogin.body.accessToken).toBeDefined();
+	const accessToken = responseLogin.body.accessToken;
+
+	const response = await supertest(app)
+		.delete('/user/1')
+		.set('Authorization', `Bearer ${accessToken}`);
+
+	expect(response.status).toBe(200);
+	prisma.user.delete.mockResolvedValue(newUser);
+});
+
+test('DELETE /user/:id doit retourner un statut 401', async () => {
+	// Configurez le mock pour que prisma.user.findFirst retourne l'utilisateur créé
+	prisma.user.findFirst.mockResolvedValue(newUser);
+
+	const accessToken = 'responseLogin.body.accessToken';
+
+	const response = await supertest(app)
+		.delete('/user/1')
+		.set('Authorization', `Bearer ${accessToken}`);
+
+	expect(response.status).toBe(401);
+	prisma.user.delete.mockResolvedValue(newUser);
 });
