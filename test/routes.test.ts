@@ -254,3 +254,39 @@ test('GET /user/me doit retourner un statut 401 et ne rien afficher', async () =
 	expect(response.body.username).toBe(undefined);
 	expect(response.body.email).toBe(undefined);
 });
+
+test('GET /user/refreshToken doit retourner un statut 200 retourner un nouvel accessToken', async () => {
+	// Configurez le mock pour que prisma.user.findFirst retourne l'utilisateur créé
+	prisma.user.findFirst.mockResolvedValue(newUser);
+
+	const responseLogin = await supertest(app)
+		.post('/user/login')
+		.send(userLoginData);
+
+	// Assertions sur le statut de la réponse
+	expect(responseLogin.status).toBe(200);
+	expect(responseLogin.body.accessToken).toBeDefined();
+	const refreshToken = responseLogin.body.refreshToken;
+
+	const response = await supertest(app)
+		.post('/user/refreshToken')
+		.set('Authorization', `Bearer ${refreshToken}`);
+
+	expect(response.status).toBe(200);
+	expect(response.body).toBeDefined();
+	expect(response.body.accessToken).toBeDefined();
+	prisma.user.delete.mockResolvedValue(newUser);
+});
+
+test('GET /user/refreshToken doit retourner un statut 401 et ne rien retourner', async () => {
+	const refreshToken = 'responseLogin.body.refreshToken';
+
+	const response = await supertest(app)
+		.post('/user/refreshToken')
+		.set('Authorization', `Bearer ${refreshToken}`);
+
+	expect(response.status).toBe(401);
+	expect(response.body).toBeDefined();
+	expect(response.body.accessToken).toBeUndefined();
+	prisma.user.delete.mockResolvedValue(newUser);
+});
